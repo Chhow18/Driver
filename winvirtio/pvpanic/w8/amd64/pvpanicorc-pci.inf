@@ -1,0 +1,91 @@
+;/*++
+;
+;Copyright (C) 2015-2021 Red Hat Inc., Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
+;
+;
+;Module Name:
+;    pvpanicorc-pci.inf
+;
+;Abstract:
+;
+;Installation Notes:
+;    Using Devcon: Type "devcon install pvpanicorc-pci.inf PCI\VEN_1B36&DEV_0011&SUBSYS_11001AF4&REV_01" to install
+;
+;--*/
+
+[Version]
+Signature       = "$WINDOWS NT$"
+Class           = System
+ClassGuid       = {4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider        = %VENDOR%
+DriverVer = 05/03/2023,2.1.0.62
+CatalogFile     = pvpanicorc-pci.cat
+PnpLockdown     = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+PVPanic_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+pvpanicorc.sys = 1,,
+WdfCoInstaller01011.dll=1 ; make sure the number matches with SourceDisksNames
+
+; ---------------
+; Install Section
+; ---------------
+
+[Manufacturer]
+%VENDOR% = PVPanic,NTamd64.6.2
+
+[PVPanic.NTamd64.6.2]
+%PVPanic.DeviceDesc% = PVPanic_Device, PCI\VEN_1B36&DEV_0011&SUBSYS_11001AF4&REV_01
+
+[PVPanic_Device.NT]
+CopyFiles = PVPanic_CopyFiles
+
+[PVPanic_CopyFiles]
+pvpanicorc.sys
+
+; --------------------
+; Service Installation
+; --------------------
+
+[PVPanic_Device.NT.Services]
+AddService = PVPanicOrc,0x00000002,PVPanic_Service_Install
+
+[PVPanic_Service_Install]
+DisplayName    = %PVPanic.Service%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\pvpanicorc.sys
+LoadOrderGroup = Extended Base
+
+; ----------------
+; WDF Installation
+; ----------------
+
+[PVPanic_Device.NT.CoInstallers]
+AddReg=PVPanic_Device_CoInstaller_AddReg
+CopyFiles=PVPanic_Device_CoInstaller_CopyFiles
+
+[PVPanic_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01011.dll,WdfCoInstaller"
+
+[PVPanic_Device_CoInstaller_CopyFiles]
+WdfCoInstaller01011.dll
+
+[PVPanic_Device.NT.Wdf]
+KmdfService = PVPanicOrc, PVPanic_wdfsect
+
+[PVPanic_wdfsect]
+KmdfLibraryVersion = 1.11
+
+[Strings]
+VENDOR = "Oracle, Inc."
+DiskName            = "QEMU PVPanic Installation Disk"
+PVPanic.DeviceDesc  = "QEMU PVPanic PCI Device"
+PVPanic.Service     = "Oracle QEMU PVPanic PCI Driver Service"

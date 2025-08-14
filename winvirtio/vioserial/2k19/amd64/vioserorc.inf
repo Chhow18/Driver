@@ -1,0 +1,108 @@
+;/*++
+;
+;Copyright (C) 2010-2021 Red Hat Inc., Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
+;
+;
+;Module Name:
+;    vioserorc.inf
+;
+;Abstract:
+;
+;Installation Notes:
+;    Using Devcon: Type "devcon install vioserorc.inf PCI\VEN_1AF4&DEV_1003&SUBSYS_0003108E&REV_00" or
+;                       "devcon install vioserorc.inf PCI\VEN_1AF4&DEV_1043&SUBSYS_1100108E&REV_01" to install
+;
+;--*/
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider=%VENDOR%
+DriverVer = 05/03/2023,2.1.0.100
+CatalogFile=vioserorc.cat
+DriverPackageType = PlugAndPlay
+DriverPackageDisplayName = %VirtioSerial.DeviceDesc%
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+VirtioSerial_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksFiles]
+vioserorc.sys  = 1,,
+;
+
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+;*****************************************
+; vioserorc  Install Section
+;*****************************************
+
+[Manufacturer]
+%VENDOR%=VirtioSerial,NTamd64.10.0
+
+[VirtioSerial.NTamd64.10.0]
+;
+; Hw Ids are PCI\VEN_1AF4&DEV_1003&SUBSYS_0003108E&REV_00
+;            PCI\VEN_1AF4&DEV_1043&SUBSYS_1100108E&REV_01
+;
+%VirtioSerial.DeviceDesc%=VirtioSerial_Device, PCI\VEN_1AF4&DEV_1003&SUBSYS_0003108E&REV_00, PCI\VEN_1AF4&DEV_1003
+%VirtioSerial.DeviceDesc%=VirtioSerial_Device, PCI\VEN_1AF4&DEV_1043&SUBSYS_1100108E&REV_01, PCI\VEN_1AF4&DEV_1043
+
+[VirtioSerial_Device.NT]
+CopyFiles=Drivers_Dir
+
+[VirtioSerial_Device.NT.HW]
+AddReg=VirtioSerial_AddReg
+
+[VirtioSerial_AddReg]
+HKR,Interrupt Management,,0x00000010
+HKR,Interrupt Management\MessageSignaledInterruptProperties,,0x00000010
+HKR,Interrupt Management\MessageSignaledInterruptProperties,MSISupported,0x00010001,1
+HKR,Interrupt Management\MessageSignaledInterruptProperties,MessageNumberLimit,0x00010001,2
+
+[Drivers_Dir]
+vioserorc.sys
+
+;-------------- Service installation
+
+[VirtioSerial_Device.NT.Services]
+AddService = VirtioSerialOrc, 0x00000002, VirtioSerial_Service_Inst
+
+; -------------- VirtioSerial driver install sections
+[VirtioSerial_Service_Inst]
+DisplayName    = %VirtioSerial.ServiceDesc%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\vioserorc.sys
+
+;--- VirtioSerial_Device Coinstaller installation ------
+;
+
+[VirtioSerial_Device.NT.CoInstallers]
+AddReg=VirtioSerial_Device_CoInstaller_AddReg
+CopyFiles=VirtioSerial_Device_CoInstaller_CopyFiles
+
+[VirtioSerial_Device_CoInstaller_AddReg]
+;
+
+
+[VirtioSerial_Device_CoInstaller_CopyFiles]
+;
+
+
+[VirtioSerial_Device.NT.Wdf]
+KmdfService =  VirtioSerialOrc, VirtioSerial_wdfsect
+
+[VirtioSerial_wdfsect]
+KmdfLibraryVersion = 1.15
+
+[Strings]
+VENDOR = "Oracle, Inc."
+DiskId1 = "Oracle VirtIO Serial Installation Disk #1"
+VirtioSerial.DeviceDesc = "Oracle VirtIO Serial Driver"
+VirtioSerial.ServiceDesc = "Oracle VirtIO Serial Service"
